@@ -18,6 +18,9 @@ import java.util.List;
 public class CrimeListFragment extends Fragment {
     private RecyclerView mCrimeRecyclerView;
     private CrimeAdapter mAdapter;
+    private int mLastUpdatedPosition = -1;
+
+    private static final String UPDATED_POSITION = "updated_position";
 
     @Nullable
     @Override
@@ -27,6 +30,10 @@ public class CrimeListFragment extends Fragment {
         mCrimeRecyclerView = v.findViewById(R.id.crime_recycler_view);
         mCrimeRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
 
+        if (savedInstanceState != null) {
+            mLastUpdatedPosition = savedInstanceState.getInt(UPDATED_POSITION);
+        }
+
         updateUI();
 
         return v;
@@ -35,6 +42,7 @@ public class CrimeListFragment extends Fragment {
     @Override
     public void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
+        outState.putInt(UPDATED_POSITION, mLastUpdatedPosition);
     }
 
     @Override
@@ -47,13 +55,18 @@ public class CrimeListFragment extends Fragment {
         CrimeLab crimeLab = CrimeLab.get(getActivity());
         List<Crime> crimes = crimeLab.getCrimes();
 
-        mAdapter = new CrimeAdapter(crimes);
-        mCrimeRecyclerView.setAdapter(mAdapter);
-    }
+        if (mAdapter == null) {
+            mAdapter = new CrimeAdapter(crimes);
+            mCrimeRecyclerView.setAdapter(mAdapter);
+        } else {
+            if (mLastUpdatedPosition > -1) {
+                mAdapter.notifyItemChanged(mLastUpdatedPosition);
+                mLastUpdatedPosition = -1;
+            } else {
+                mAdapter.notifyDataSetChanged();
+            }
+        }
 
-    private void updateItemUI(int position)
-    {
-        mAdapter.notifyItemChanged(position);
     }
 
     private class CrimeHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
@@ -81,6 +94,7 @@ public class CrimeListFragment extends Fragment {
         @Override
         public void onClick(View v) {
             Intent intent = CrimeActivity.newIntent(getActivity(), mCrime.getId());
+            mLastUpdatedPosition = getAdapterPosition();
             startActivity(intent);
         }
     }
