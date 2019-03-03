@@ -12,7 +12,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.util.List;
 
@@ -33,13 +32,28 @@ public class CrimeListFragment extends Fragment {
         return v;
     }
 
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        updateUI();
+    }
+
     private void updateUI() {
         CrimeLab crimeLab = CrimeLab.get(getActivity());
         List<Crime> crimes = crimeLab.getCrimes();
 
         mAdapter = new CrimeAdapter(crimes);
-
         mCrimeRecyclerView.setAdapter(mAdapter);
+    }
+
+    private void updateItemUI(int position)
+    {
+        mAdapter.notifyItemChanged(position);
     }
 
     private class CrimeHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
@@ -71,32 +85,7 @@ public class CrimeListFragment extends Fragment {
         }
     }
 
-    private class CrimePoliceHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
-        private TextView mTitleTextView;
-        private TextView mDateTextView;
-        private Crime mCrime;
-
-        public CrimePoliceHolder(LayoutInflater inflater, ViewGroup parent) {
-            super(inflater.inflate(R.layout.list_item_crime_police, parent, false));
-
-            mTitleTextView = itemView.findViewById(R.id.crime_title);
-            mDateTextView = itemView.findViewById(R.id.crime_date);
-            itemView.setOnClickListener(this);
-        }
-
-        public void bind(Crime crime) {
-            mCrime = crime;
-            mTitleTextView.setText(mCrime.getTitle());
-            mDateTextView.setText(mCrime.getDate().toString());
-        }
-
-        @Override
-        public void onClick(View v) {
-            Toast.makeText(getActivity(), mCrime.getTitle() + "clicked!", Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    private class CrimeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+    private class CrimeAdapter extends RecyclerView.Adapter<CrimeHolder> {
         private List<Crime> mCrimes;
 
         public final int TYPE_NORMAL = 1;
@@ -108,23 +97,15 @@ public class CrimeListFragment extends Fragment {
 
         @NonNull
         @Override
-        public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
+        public CrimeHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
             LayoutInflater layoutInflater = LayoutInflater.from(getActivity());
-            if (i == TYPE_NORMAL) {
-                return new CrimeHolder(layoutInflater, viewGroup);
-            } else {
-                return new CrimePoliceHolder(layoutInflater, viewGroup);
-            }
+            return new CrimeHolder(layoutInflater, viewGroup);
         }
 
         @Override
-        public void onBindViewHolder(@NonNull RecyclerView.ViewHolder viewHolder, int i) {
+        public void onBindViewHolder(@NonNull CrimeHolder viewHolder, int i) {
             Crime crime = mCrimes.get(i);
-            if (viewHolder instanceof CrimeHolder) {
-                ((CrimeHolder) viewHolder).bind(crime);
-            } else {
-                ((CrimePoliceHolder) viewHolder).bind(crime);
-            }
+            viewHolder.bind(crime);
         }
 
         @Override
